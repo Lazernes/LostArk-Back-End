@@ -1,7 +1,7 @@
 package org.example.lostarkbackend.global.scheduler;
 
 import lombok.RequiredArgsConstructor;
-import org.example.lostarkbackend.domain.markets.service.MarketItemService;
+import org.example.lostarkbackend.domain.markets.service.MarketItemCollectService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -13,7 +13,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class MarketItemScheduler {
 
-    private final MarketItemService marketItemService;
+    private final MarketItemCollectService marketItemCollectService;
 
     // 수집 대상 itemId
     @Value("${market.item.engraving.ids}")
@@ -31,7 +31,7 @@ public class MarketItemScheduler {
         itemIds.addAll(reforgingItemIds);
 
         for (Long id : itemIds) {
-            marketItemService.fetchAndSaveItemMarketInfo(id);
+            marketItemCollectService.fetchAndSaveItemMarketInfo(id);
         }
     }
 

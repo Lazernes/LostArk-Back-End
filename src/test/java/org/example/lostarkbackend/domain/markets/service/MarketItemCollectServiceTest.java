@@ -15,21 +15,19 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.*;
 import static org.mockito.Mockito.times;
 
 @SpringBootTest
 @Transactional
-class MarketItemServiceTest {
+class MarketItemCollectServiceTest {
 
     @Autowired
-    private MarketItemService marketItemService;
+    private MarketItemCollectService marketItemCollectService;
 
     @MockitoBean
     private MarketItemRepository marketItemRepository;
@@ -75,7 +73,7 @@ class MarketItemServiceTest {
                 });
 
         // when
-        marketItemService.fetchAndSaveItemMarketInfo(itemId);
+        marketItemCollectService.fetchAndSaveItemMarketInfo(itemId);
 
         // then
         then(marketItemPriceHistoryRepository)
@@ -114,7 +112,7 @@ class MarketItemServiceTest {
                 .willReturn(false);
 
         // when
-        marketItemService.fetchAndSaveItemMarketInfo(itemId);
+        marketItemCollectService.fetchAndSaveItemMarketInfo(itemId);
 
         // then
         then(marketItemPriceHistoryRepository)

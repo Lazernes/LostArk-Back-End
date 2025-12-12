@@ -18,7 +18,7 @@ import java.util.List;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class MarketItemService {
+public class MarketItemCollectService {
 
     private final MarketItemRepository marketItemRepository;
     private final MarketItemPriceHistoryRepository marketItemPriceHistoryRepository;
