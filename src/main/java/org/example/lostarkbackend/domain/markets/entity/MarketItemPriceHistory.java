@@ -14,6 +14,12 @@ import java.time.LocalDate;
                         name = "unique_item_price_date",
                         columnNames = {"item_id", "price_date"}
                 )
+        },
+        indexes = {
+                @Index(
+                        name = "idx_market_item_date",
+                        columnList = "item_id, price_date"
+                )
         }
 )
 @Getter
