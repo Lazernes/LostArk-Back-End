@@ -22,6 +22,9 @@ public class MarketItemScheduler {
     @Value("${market.item.reforging.ids}")
     private List<Long> reforgingItemIds;
 
+    @Value("${market.item.weapon.evolution.ids}")
+    private List<Long> evolutionItemIds;
+
     // 매일 오전 0시 0분에 실행
     @Scheduled(cron = "10 00 00 * * *")
     public void updateMarketPrices() {
@@ -29,6 +32,7 @@ public class MarketItemScheduler {
         List<Long> itemIds = new ArrayList<>();
         itemIds.addAll(engravingItemIds);
         itemIds.addAll(reforgingItemIds);
+        itemIds.addAll(evolutionItemIds);
 
         for (Long id : itemIds) {
             marketItemCollectService.fetchAndSaveItemMarketInfo(id);
