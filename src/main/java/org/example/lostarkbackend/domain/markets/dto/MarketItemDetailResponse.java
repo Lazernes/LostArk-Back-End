@@ -24,6 +24,6 @@ public class MarketItemDetailResponse {
     @JsonProperty("Stats")
     private List<MarketItemStatsResponse> stats;
 
-    @JsonProperty("Tooltip")
+    @JsonProperty("ToolTip")
     private String toolTip;
 }
