@@ -6,7 +6,9 @@ import org.example.lostarkbackend.domain.markets.dto.MarketItemDetailResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
+import reactor.util.retry.Retry;
 
+import java.time.Duration;
 import java.util.List;
 
 @Component
@@ -26,6 +28,10 @@ public class MarketApiClient {
                     .retrieve()
                     .bodyToFlux(MarketItemDetailResponse.class)
                     .collectList()
+                    .retryWhen(
+                            Retry.backoff(3, Duration.ofSeconds(10))
+                                    .filter(e -> e instanceof WebClientResponseException.TooManyRequests)
+                    )
                     .block();
         } catch (WebClientResponseException e) {
             log.error("Lost Ark API 오류 발생: status={}, body={}",
