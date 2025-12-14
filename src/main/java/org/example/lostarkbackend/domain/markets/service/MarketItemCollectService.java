@@ -8,7 +8,9 @@ import org.example.lostarkbackend.domain.markets.dao.MarketItemRepository;
 import org.example.lostarkbackend.domain.markets.dto.MarketItemDetailResponse;
 import org.example.lostarkbackend.domain.markets.dto.MarketItemStatsResponse;
 import org.example.lostarkbackend.domain.markets.entity.MarketItem;
+import org.example.lostarkbackend.domain.markets.entity.MarketItemGrade;
 import org.example.lostarkbackend.domain.markets.entity.MarketItemPriceHistory;
+import org.example.lostarkbackend.domain.markets.util.TooltipGradeExtractor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +25,7 @@ public class MarketItemCollectService {
     private final MarketItemRepository marketItemRepository;
     private final MarketItemPriceHistoryRepository marketItemPriceHistoryRepository;
     private final MarketApiClient marketApiClient;
+    private final TooltipGradeExtractor tooltipGradeExtractor;
 
     // MarketItem 시세 저장
     @Transactional
@@ -65,12 +68,19 @@ public class MarketItemCollectService {
 
     private MarketItem saveNewMarketItem(Long itemId, MarketItemDetailResponse dto) {
 
+        MarketItemGrade grade = tooltipGradeExtractor.extract(dto.getToolTip());
+
+        if (grade == null) {
+            log.warn("grade 추출 실패 itemId={} name={}", itemId, dto.getName());
+        }
+
         MarketItem item = MarketItem.builder()
                 .itemId(itemId)
                 .name(dto.getName())
                 .tradeRemainCount(dto.getTradeRemainCount())
                 .bundleCount(dto.getBundleCount())
                 .tooltip(dto.getToolTip())
+                .grade(grade)
                 .build();
 
         return marketItemRepository.save(item);
