@@ -48,4 +48,9 @@ public class MarketItemPriceHistory {
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDate createdAt;
+
+    public void update(double avgPrice, int tradeCount) {
+        this.avgPrice = avgPrice;
+        this.tradeCount = tradeCount;
+    }
 }

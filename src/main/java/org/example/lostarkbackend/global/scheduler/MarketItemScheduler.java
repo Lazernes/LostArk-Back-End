@@ -1,6 +1,7 @@
 package org.example.lostarkbackend.global.scheduler;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.lostarkbackend.domain.markets.service.MarketItemCollectService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class MarketItemScheduler {
@@ -21,6 +23,9 @@ public class MarketItemScheduler {
 
     @Value("${market.item.reforging.ids}")
     private List<Long> reforgingItemIds;
+
+    @Value("${market.item.reforging.additional.ids}")
+    private List<Long> additionalItemIds;
 
     @Value("${market.item.weapon.evolution.ids}")
     private List<Long> evolutionItemIds;
@@ -77,12 +82,15 @@ public class MarketItemScheduler {
     private List<Long> lifeskillMiscItemIds;
 
     // 매일 오전 0시 0분에 실행
-    @Scheduled(cron = "10 00 00 * * *")
+    @Scheduled(fixedDelay = 10 * 60 * 1000)
     public void updateMarketPrices() {
+
+        log.info("[Scheduler] 오늘 시세 수집 시작");
 
         List<Long> itemIds = new ArrayList<>();
         itemIds.addAll(engravingItemIds);
         itemIds.addAll(reforgingItemIds);
+        itemIds.addAll(additionalItemIds);
         itemIds.addAll(evolutionItemIds);
         itemIds.addAll(arkgridGemIds);
         itemIds.addAll(batttleRecoveryItemIds);
@@ -109,9 +117,14 @@ public class MarketItemScheduler {
                 Thread.sleep(700);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                break;
+                log.warn("Interrupted. itemId={}", id);
+                continue;
+            } catch (Exception e) {
+                log.error("시세 수집 실패 itemId={}", id, e);
             }
         }
+
+        log.info("[Scheduler] 오늘 시세 수집 종료");
     }
 
 }
