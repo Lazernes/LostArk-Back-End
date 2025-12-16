@@ -13,4 +13,6 @@ public interface MarketItemPriceHistoryRepository extends JpaRepository<MarketIt
     Optional<MarketItemPriceHistory> findTopByMarketItem_IdOrderByPriceDateDesc(Long itemId);
 
     List<MarketItemPriceHistory> findByMarketItem_IdAndPriceDateBetweenOrderByPriceDate(Long itemId, LocalDate startDate, LocalDate endDate);
+
+    Optional<MarketItemPriceHistory> findByMarketItem_IdAndPriceDate(Long itemId, LocalDate priceDate);
 }

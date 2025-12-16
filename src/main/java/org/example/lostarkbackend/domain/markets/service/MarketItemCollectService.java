@@ -93,62 +93,19 @@ public class MarketItemCollectService {
             return;
         }
 
+        LocalDate today = LocalDate.now();
+        LocalDate yesterday = today.minusDays(1);
+
+        // 오늘 시세 저장 or 업데이트
+        saveOrUpdateTodayPrice(item, stats, today);
+
         if (isNewItem) {
-
-            LocalDate today = LocalDate.now();
-
-            // 신규 아이템 >> 7일 전체 저장
-            for (MarketItemStatsResponse stat : stats) {
-                LocalDate date = LocalDate.parse(stat.getDate());
-
-                // 오늘 데이터는 스킵
-                if (date.equals(today)) {
-                    continue;
-                }
-
-                if (marketItemPriceHistoryRepository.existsByMarketItem_IdAndPriceDate(item.getId(), date)) {
-                    continue;
-                }
-
-                MarketItemPriceHistory history = MarketItemPriceHistory.builder()
-                        .marketItem(item)
-                        .priceDate(date)
-                        .avgPrice(stat.getAvgPrice())
-                        .tradeCount(stat.getTradeCount())
-                        .build();
-
-                marketItemPriceHistoryRepository.save(history);
-            }
-
-            log.info("신규 아이템 14일 시세(오늘 제외) 저장 완료 itemId={}", item.getItemId());
+            savePastPriceHistories(item, stats, yesterday);
             return;
         }
 
         // 기존 아이템 >> 어제 데이터만 저장
-        MarketItemStatsResponse yesterdayStat = extractYesterdayStat(stats);
-
-        if (yesterdayStat == null) {
-            log.warn("어제 날짜 데이터가 없습니다. itemId={}, yesterday={}", item.getItemId(), LocalDate.now().minusDays(1));
-            return;
-        }
-
-        LocalDate yesterday = LocalDate.parse(yesterdayStat.getDate());
-
-        if (marketItemPriceHistoryRepository.existsByMarketItem_IdAndPriceDate(item.getId(), yesterday)) {
-            log.info("이미 저장된 어제 데이터 itemId={}, date={}", item.getItemId(), yesterday);
-            return;
-        }
-
-        MarketItemPriceHistory history = MarketItemPriceHistory.builder()
-                .marketItem(item)
-                .priceDate(yesterday)
-                .avgPrice(yesterdayStat.getAvgPrice())
-                .tradeCount(yesterdayStat.getTradeCount())
-                .build();
-
-        marketItemPriceHistoryRepository.save(history);
-
-        log.info("기존 아이템 어제 데이터 저장 완료 itemId={}", item.getItemId());
+        saveYesterdayPriceHistories(item, stats, yesterday);
     }
 
     // 어제 날짜 데이터만 가져오기
@@ -171,5 +128,96 @@ public class MarketItemCollectService {
 
         // Case 2. 재련재료: responses.get(0)이 실제 데이터 (TradeRemainCount == null)
         return responses.get(0);
+    }
+
+    // 오늘 시세 저장
+    private void saveOrUpdateTodayPrice(MarketItem item, List<MarketItemStatsResponse> stats, LocalDate today) {
+        MarketItemStatsResponse todayStat = stats.stream()
+                .filter(s -> LocalDate.parse(s.getDate()).equals(today))
+                .findFirst()
+                .orElse(null);
+
+        if(todayStat == null) {
+            log.warn("오늘 시세 데이터 없음 itemId={}", item.getItemId());
+            return;
+        }
+
+        marketItemPriceHistoryRepository.findByMarketItem_IdAndPriceDate(item.getId(), today)
+                .ifPresentOrElse(
+                        existing -> {
+                            existing.update(
+                                    todayStat.getAvgPrice(),
+                                    todayStat.getTradeCount()
+                            );
+                            log.debug("오늘 시세 UPDATE itemId={}", item.getItemId());
+                        },
+                        () -> {
+                            MarketItemPriceHistory history = MarketItemPriceHistory.builder()
+                                    .marketItem(item)
+                                    .priceDate(today)
+                                    .avgPrice(todayStat.getAvgPrice())
+                                    .tradeCount(todayStat.getTradeCount())
+                                    .build();
+
+                            marketItemPriceHistoryRepository.save(history);
+                            log.debug("오늘 시세 INSERT itemId={}", item.getItemId());
+                        }
+                );
+
+    }
+
+    // 과거 시세 저장(신규 아이템)
+    private void savePastPriceHistories(MarketItem item, List<MarketItemStatsResponse> stats, LocalDate today) {
+
+        // 신규 아이템 >> 13일 전체 저장
+        for (MarketItemStatsResponse stat : stats) {
+            LocalDate date = LocalDate.parse(stat.getDate());
+
+            // 오늘 데이터는 스킵
+            if (date.equals(today)) {
+                continue;
+            }
+
+            if (marketItemPriceHistoryRepository.existsByMarketItem_IdAndPriceDate(item.getId(), date)) {
+                continue;
+            }
+
+            MarketItemPriceHistory history = MarketItemPriceHistory.builder()
+                    .marketItem(item)
+                    .priceDate(date)
+                    .avgPrice(stat.getAvgPrice())
+                    .tradeCount(stat.getTradeCount())
+                    .build();
+
+            marketItemPriceHistoryRepository.save(history);
+        }
+
+        log.info("신규 아이템 14일 시세(오늘 제외) 저장 완료 itemId={}", item.getItemId());
+    }
+
+    // 어제 시세만 저장 (기존 아이템)
+    private void saveYesterdayPriceHistories(MarketItem item, List<MarketItemStatsResponse> stats, LocalDate yesterday) {
+        MarketItemStatsResponse yesterdayStat = extractYesterdayStat(stats);
+
+        if (yesterdayStat == null) {
+            log.warn("어제 날짜 데이터가 없습니다. itemId={}, yesterday={}", item.getItemId(), LocalDate.now().minusDays(1));
+            return;
+        }
+
+        if (marketItemPriceHistoryRepository.existsByMarketItem_IdAndPriceDate(item.getId(), yesterday)) {
+            log.info("이미 저장된 어제 데이터 itemId={}, date={}", item.getItemId(), yesterday);
+            return;
+        }
+
+        MarketItemPriceHistory history = MarketItemPriceHistory.builder()
+                .marketItem(item)
+                .priceDate(yesterday)
+                .avgPrice(yesterdayStat.getAvgPrice())
+                .tradeCount(yesterdayStat.getTradeCount())
+                .build();
+
+        marketItemPriceHistoryRepository.save(history);
+
+        log.info("기존 아이템 어제 데이터 저장 완료 itemId={}", item.getItemId());
     }
 }

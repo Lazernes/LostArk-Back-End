@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.lostarkbackend.domain.markets.dao.MarketItemPriceHistoryRepository;
 import org.example.lostarkbackend.domain.markets.dao.MarketItemRepository;
 import org.example.lostarkbackend.domain.markets.dto.MarketItemLatestPriceResponse;
+import org.example.lostarkbackend.domain.markets.dto.MarketItemPriceSummary;
 import org.example.lostarkbackend.domain.markets.dto.MarketItemStatsResponse;
 import org.example.lostarkbackend.domain.markets.entity.MarketItem;
 import org.example.lostarkbackend.domain.markets.entity.MarketItemPriceHistory;
@@ -58,5 +59,42 @@ public class MarketItemQueryService {
         return marketItemRepository.findByItemId(itemId)
                 .orElseThrow(() ->
                     new IllegalArgumentException("존재하지 않는 아이템입니다. itemId=" + itemId));
+    }
+
+    // 가격 변동 계산
+    @Transactional
+    public MarketItemPriceSummary calculatePriceChange(Long itemId) {
+        LocalDate today = LocalDate.now();
+        LocalDate yesterday = today.minusDays(1);
+
+        MarketItemPriceHistory todayHistory = marketItemPriceHistoryRepository.findByMarketItem_IdAndPriceDate(itemId, today)
+                .orElse(null);
+
+        MarketItemPriceHistory yesterdayHistory = marketItemPriceHistoryRepository.findByMarketItem_IdAndPriceDate(itemId, yesterday)
+                .orElse(null);
+
+        // 오늘 데이터 없으면 계산 불가
+        if (todayHistory == null) {
+            return new MarketItemPriceSummary(0.0, 0.0, 0.0);
+        }
+
+        // 오늘 거래량이 없으면 변동률 0으로 처리
+        if(todayHistory.getTradeCount() == 0 ){
+            return new MarketItemPriceSummary(0.0, 0.0, 0.0);
+        }
+
+        double todayPrice = todayHistory.getAvgPrice();
+
+        // 어제 데이터 없으면 변동 0 처리
+        if (yesterdayHistory == null || yesterdayHistory.getAvgPrice() == 0.0) {
+            return new MarketItemPriceSummary(0.0, 0.0, 0.0);
+        }
+
+        double yesterdayPrice = yesterdayHistory.getAvgPrice();
+        double diff = todayPrice - yesterdayPrice;
+
+        double rate = diff / yesterdayPrice * 100;
+
+        return new MarketItemPriceSummary(todayPrice, Math.round(diff * 10) / 10.0, Math.round(rate * 10) / 10.0);  // rate는 소수점 1자리
     }
 }
