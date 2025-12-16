@@ -45,20 +45,8 @@ public class MarketItemScheduler {
     @Value("${market.item.battle.buff.ids}")
     private List<Long> batttleBuffItemIds;
 
-    @Value("${market.item.cooking.omelette.ids}")
-    private List<Long> cookingOmeletteItemIds;
-
-    @Value("${market.item.cooking.skewer.ids}")
-    private List<Long> cookingSkewerItemIds;
-
-    @Value("${market.item.cooking.steak.ids}")
-    private List<Long> cookingSteakItemIds;
-
     @Value("${market.item.cooking.food.ids}")
     private List<Long> cookingFoodItemIds;
-
-    @Value("${market.item.cooking.special.ids}")
-    private List<Long> cookingSpecialItemIds;
 
     @Value("${market.item.lifeskill.gathering.ids}")
     private List<Long> lifeskillGatheringItemIds;
@@ -82,7 +70,7 @@ public class MarketItemScheduler {
     private List<Long> lifeskillMiscItemIds;
 
     // 매일 오전 0시 0분에 실행
-    @Scheduled(fixedDelay = 10 * 60 * 1000)
+    @Scheduled(cron = "10 */10 * * * *")
     public void updateMarketPrices() {
 
         log.info("[Scheduler] 오늘 시세 수집 시작");
@@ -97,11 +85,7 @@ public class MarketItemScheduler {
         itemIds.addAll(battleAttackItemIds);
         itemIds.addAll(battleUtilityItemIds);
         itemIds.addAll(batttleBuffItemIds);
-        itemIds.addAll(cookingOmeletteItemIds);
-        itemIds.addAll(cookingSkewerItemIds);
-        itemIds.addAll(cookingSteakItemIds);
         itemIds.addAll(cookingFoodItemIds);
-        itemIds.addAll(cookingSpecialItemIds);
         itemIds.addAll(lifeskillGatheringItemIds);
         itemIds.addAll(lifeskillLoggingItemIds);
         itemIds.addAll(lifeskillMiningItemIds);

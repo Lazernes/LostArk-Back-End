@@ -3,7 +3,9 @@ package org.example.lostarkbackend.domain.markets.controller;
 import lombok.RequiredArgsConstructor;
 import org.example.lostarkbackend.domain.markets.dto.MarketItemLatestPriceResponse;
 import org.example.lostarkbackend.domain.markets.dto.MarketItemStatsResponse;
+import org.example.lostarkbackend.domain.markets.dto.MarketItemSummaryResponse;
 import org.example.lostarkbackend.domain.markets.service.MarketItemCollectService;
+import org.example.lostarkbackend.domain.markets.service.MarketItemListService;
 import org.example.lostarkbackend.domain.markets.service.MarketItemQueryService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +21,7 @@ public class MarketItemController {
 
     private final MarketItemCollectService marketItemCollectService;
     private final MarketItemQueryService marketItemQueryService;
+    private final MarketItemListService marketItemListService;
 
     @GetMapping("/fetch/{itemId}")
     public ResponseEntity<String> fetchItem(@PathVariable Long itemId) {
@@ -43,5 +46,11 @@ public class MarketItemController {
             LocalDate endDate
     ) {
         return marketItemQueryService.getPriceHistory(itemId, startDate, endDate);
+    }
+
+    // 전체 아이템 조회
+    @GetMapping("/items")
+    public List<MarketItemSummaryResponse> getItems() {
+        return marketItemListService.getMarketItemList();
     }
 }
