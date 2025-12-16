@@ -78,6 +78,11 @@ public class MarketItemQueryService {
             return new MarketItemPriceSummary(0.0, 0.0, 0.0);
         }
 
+        // 오늘 거래량이 없으면 변동률 0으로 처리
+        if(todayHistory.getTradeCount() == 0 ){
+            return new MarketItemPriceSummary(0.0, 0.0, 0.0);
+        }
+
         double todayPrice = todayHistory.getAvgPrice();
 
         // 어제 데이터 없으면 변동 0 처리
