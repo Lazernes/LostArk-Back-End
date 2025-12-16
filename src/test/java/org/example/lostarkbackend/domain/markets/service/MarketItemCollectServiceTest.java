@@ -39,7 +39,7 @@ class MarketItemCollectServiceTest {
     private MarketApiClient marketApiClient;
 
     @Test
-    @DisplayName("신규 아이템이면 14일 데이터 중에서 오늘을 제외한 7일 데이터를 모두 저장")
+    @DisplayName("신규 아이템이면 14일 데이터 중에서 오늘을 제외한 과거 데이터를 모두 저장")
     void save_new_item_13days() {
         // given
         Long itemId = 6812005L; // 달인용 제작 키트
@@ -50,6 +50,7 @@ class MarketItemCollectServiceTest {
         detail.setBundleCount(1);
 
         List<MarketItemStatsResponse> stats = List.of(
+                new MarketItemStatsResponse(LocalDate.now().toString(), 100.0, 20),
                 new MarketItemStatsResponse(LocalDate.now().minusDays(1).toString(), 100.0, 20),
                 new MarketItemStatsResponse(LocalDate.now().minusDays(2).toString(), 200.0, 30)
         );
@@ -77,7 +78,7 @@ class MarketItemCollectServiceTest {
 
         // then
         then(marketItemPriceHistoryRepository)
-                .should(times(2))
+                .should(times(stats.size()))
                 .save(any(MarketItemPriceHistory.class));
     }
 
