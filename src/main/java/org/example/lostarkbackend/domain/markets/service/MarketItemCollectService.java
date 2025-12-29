@@ -96,24 +96,27 @@ public class MarketItemCollectService {
         LocalDate today = LocalDate.now();
         LocalDate yesterday = today.minusDays(1);
 
+        boolean firstRunToday = isFirstRunOfToday(item, today);
+
+        // 기존 아이템: 어제 데이터만 저장
+        if (!isNewItem && firstRunToday) {
+            saveYesterdayPriceHistories(item, stats, yesterday);
+        }
+
         // 오늘 시세 저장 or 업데이트
         saveOrUpdateTodayPrice(item, stats, today);
 
+        // 신규 아이템: 최초 수집 시에만 과거 데이터 저장
         if (isNewItem) {
-            savePastPriceHistories(item, stats, yesterday);
-            return;
+            savePastPriceHistories(item, stats, today);
         }
 
-        // 기존 아이템 >> 어제 데이터만 저장
-        saveYesterdayPriceHistories(item, stats, yesterday);
     }
 
     // 어제 날짜 데이터만 가져오기
-    private MarketItemStatsResponse extractYesterdayStat(List<MarketItemStatsResponse> stats) {
-        LocalDate yesterday = LocalDate.now().minusDays(1);
-
+    private MarketItemStatsResponse extractYesterdayStat(List<MarketItemStatsResponse> stats, LocalDate targetDate) {
         return stats.stream()
-                .filter(s -> LocalDate.parse(s.getDate()).equals(yesterday))
+                .filter(s -> LocalDate.parse(s.getDate()).equals(targetDate))
                 .findFirst()
                 .orElse(null);
     }
@@ -197,27 +200,45 @@ public class MarketItemCollectService {
 
     // 어제 시세만 저장 (기존 아이템)
     private void saveYesterdayPriceHistories(MarketItem item, List<MarketItemStatsResponse> stats, LocalDate yesterday) {
-        MarketItemStatsResponse yesterdayStat = extractYesterdayStat(stats);
+        MarketItemStatsResponse yesterdayStat = extractYesterdayStat(stats, yesterday);
 
         if (yesterdayStat == null) {
             log.warn("어제 날짜 데이터가 없습니다. itemId={}, yesterday={}", item.getItemId(), LocalDate.now().minusDays(1));
             return;
         }
 
-        if (marketItemPriceHistoryRepository.existsByMarketItem_IdAndPriceDate(item.getId(), yesterday)) {
-            log.info("이미 저장된 어제 데이터 itemId={}, date={}", item.getItemId(), yesterday);
-            return;
-        }
+        marketItemPriceHistoryRepository
+                .findByMarketItem_IdAndPriceDate(item.getId(), yesterday)
+                .ifPresentOrElse(
+                        existing -> {
+                            // 최신 상태로 확정 UPDATE
+                            existing.update(
+                                    yesterdayStat.getAvgPrice(),
+                                    yesterdayStat.getTradeCount()
+                            );
+                            log.info("어제 시세 UPDATE itemId={}, date={}",
+                                    item.getItemId(), yesterday);
+                        },
+                        () -> {
+                            // 혹시 누락된 경우 INSERT
+                            MarketItemPriceHistory history =
+                                    MarketItemPriceHistory.builder()
+                                            .marketItem(item)
+                                            .priceDate(yesterday)
+                                            .avgPrice(yesterdayStat.getAvgPrice())
+                                            .tradeCount(yesterdayStat.getTradeCount())
+                                            .build();
 
-        MarketItemPriceHistory history = MarketItemPriceHistory.builder()
-                .marketItem(item)
-                .priceDate(yesterday)
-                .avgPrice(yesterdayStat.getAvgPrice())
-                .tradeCount(yesterdayStat.getTradeCount())
-                .build();
+                            marketItemPriceHistoryRepository.save(history);
+                            log.info("누락된 어제 시세 INSERT itemId={}, date={}",
+                                    item.getItemId(), yesterday);
+                        }
+                );
+    }
 
-        marketItemPriceHistoryRepository.save(history);
-
-        log.info("기존 아이템 어제 데이터 저장 완료 itemId={}", item.getItemId());
+    // 오늘 날짜 기준 첫 실행인지 판단
+    private boolean isFirstRunOfToday(MarketItem item, LocalDate today) {
+        return !marketItemPriceHistoryRepository
+                .existsByMarketItem_IdAndPriceDate(item.getId(), today);
     }
 }
