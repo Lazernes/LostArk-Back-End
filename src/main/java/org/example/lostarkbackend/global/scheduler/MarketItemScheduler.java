@@ -70,7 +70,7 @@ public class MarketItemScheduler {
     private List<Long> lifeskillMiscItemIds;
 
     // 매일 오전 0시 0분에 실행
-    @Scheduled(cron = "10 */10 * * * *")
+    @Scheduled(cron = "10 05 01 * * *")
     public void updateMarketPrices() {
 
         log.info("[Scheduler] 오늘 시세 수집 시작");
