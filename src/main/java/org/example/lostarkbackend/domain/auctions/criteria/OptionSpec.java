@@ -1,5 +1,8 @@
-package org.example.lostarkbackend.domain.auctions;
+package org.example.lostarkbackend.domain.auctions.criteria;
 
+import lombok.Getter;
+
+@Getter
 public enum OptionSpec {
 
     // NECKLACE
@@ -9,7 +12,7 @@ public enum OptionSpec {
 
     ADDITIONAL_DAMAGE_HIGH("추가 피해", 2.60),
     ADDITIONAL_DAMAGE_MID("추가 피해", 1.60),
-    ADDITIONAL_DAMAGE_LOW("추가 피해", 0.80),
+    ADDITIONAL_DAMAGE_LOW("추가 피해", 0.70),
 
     STIGMA_EFFECT_HIGH("낙인력", 8.00),
     STIGMA_EFFECT_MID("낙인력", 4.80),

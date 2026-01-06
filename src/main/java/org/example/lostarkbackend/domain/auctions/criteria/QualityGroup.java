@@ -1,7 +1,7 @@
-package org.example.lostarkbackend.domain.auctions;
+package org.example.lostarkbackend.domain.auctions.criteria;
 
 public enum QualityGroup {
-    Q70_79(70, 79),
+    Q67_79(67, 79),
     Q80_89(80, 89),
     Q90_99(90, 99),
     Q100(100, 100);
